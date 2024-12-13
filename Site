@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Production Pricing Tool</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Video Production Pricing Tool</h1>
+    <p>Calculate fair prices for video production services in your area.</p>
+  </header>
+
+  <main>
+    <form id="pricingForm">
+      <section>
+        <h2>Project Details</h2>
+        <label for="location">Location:</label>
+        <select id="location" name="location">
+          <option value="atlanta">Atlanta, GA</option>
+          <option value="new_york">New York, NY</option>
+          <option value="los_angeles">Los Angeles, CA</option>
+          <!-- Add more cities -->
+        </select>
+
+        <label for="productionHours">Production Hours:</label>
+        <input type="number" id="productionHours" name="productionHours" min="1" max="24" required>
+
+        <label for="reelsCount">Number of Reels:</label>
+        <input type="number" id="reelsCount" name="reelsCount" min="1" required>
+
+        <label for="editingComplexity">Editing Complexity:</label>
+        <select id="editingComplexity" name="editingComplexity">
+          <option value="basic">Basic</option>
+          <option value="standard">Standard</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </section>
+
+      <section>
+        <h2>Optional Services</h2>
+        <label><input type="checkbox" name="extras" value="lighting"> Advanced Lighting Setup ($50/hr)</label><br>
+        <label><input type="checkbox" name="extras" value="sound"> Professional Sound Design ($75/hr)</label><br>
+        <label><input type="checkbox" name="extras" value="script"> Script Writing Assistance ($100 flat)</label>
+      </section>
+
+      <button type="submit">Calculate Price</button>
+    </form>
+
+    <section id="result">
+      <h2>Estimated Price</h2>
+      <p id="priceOutput">Fill out the form to see the estimated price.</p>
+    </section>
+
+    <section id="chatWidget">
+      <h2>Ask ChatGPT</h2>
+      <textarea id="chatInput" placeholder="Ask for pricing advice or additional help..."></textarea>
+      <button id="chatSubmit">Send</button>
+      <div id="chatOutput"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2024 Video Pricing Tool. All rights reserved.</p>
+  </footer>
+
+  <script>
+    document.getElementById('pricingForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      // Get form values
+      const location = document.getElementById('location').value;
+      const productionHours = parseInt(document.getElementById('productionHours').value);
+      const reelsCount = parseInt(document.getElementById('reelsCount').value);
+      const editingComplexity = document.getElementById('editingComplexity').value;
+      const extras = Array.from(document.querySelectorAll('input[name="extras"]:checked')).map(extra => extra.value);
+
+      // Base rates
+      let baseRate = 100; // Example base rate per hour
+      if (location === 'new_york') baseRate = 150;
+      if (location === 'los_angeles') baseRate = 120;
+
+      // Calculate base production cost
+      let productionCost = baseRate * productionHours;
+
+      // Editing complexity multiplier
+      let editingMultiplier = 1;
+      if (editingComplexity === 'standard') editingMultiplier = 1.5;
+      if (editingComplexity === 'advanced') editingMultiplier = 2;
+      const editingCost = productionHours * editingMultiplier * 50; // Example editing rate per hour
+
+      // Extras cost
+      let extrasCost = 0;
+      if (extras.includes('lighting')) extrasCost += productionHours * 50;
+      if (extras.includes('sound')) extrasCost += productionHours * 75;
+      if (extras.includes('script')) extrasCost += 100;
+
+      // Total cost
+      const totalCost = productionCost + editingCost + extrasCost;
+
+      // Display result
+      document.getElementById('priceOutput').textContent = `Estimated Price: $${totalCost.toFixed(2)}`;
+    });
+
+    // ChatGPT integration
+    document.getElementById('chatSubmit').addEventListener('click', async function() {
+      const query = document.getElementById('chatInput').value;
+      if (!query) {
+        alert('Please enter a question or request.');
+        return;
+      }
+
+      document.getElementById('chatOutput').textContent = 'Loading...';
+
+      try {
+        const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+          model: 'gpt-4',
+          messages: [{ role: 'user', content: query }],
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer YOUR_OPENAI_API_KEY`,
+          },
+        });
+
+        document.getElementById('chatOutput').textContent = response.data.choices[0].message.content;
+      } catch (error) {
+        console.error(error);
+        document.getElementById('chatOutput').textContent = 'An error occurred. Please try again.';
+      }
+    });
+  </script>
+</body>
+</html>
